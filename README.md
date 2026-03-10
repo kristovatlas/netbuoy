@@ -23,9 +23,15 @@ Real-time network connectivity monitor and healer for macOS. Tracks uptime, mana
 ## Install
 
 ```bash
-make install        # Python version → /usr/local/bin/netbuoy
+make install        # Python version → ~/.local/bin/netbuoy
 make install-sh     # Shell-only version (no dependencies)
 make uninstall
+```
+
+Make sure `~/.local/bin` is in your `PATH`. Add to your shell profile if needed:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
 ## Usage
