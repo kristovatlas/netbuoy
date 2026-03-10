@@ -144,30 +144,44 @@ class TestTransmissionKillGuard:
         assert killed is False
 
 
-class TestVpnRecycleCooldown:
-    """Test VPN recycle cooldown logic."""
+class TestVpnNotification:
+    """Test VPN unprotected notification logic."""
 
-    def test_recycle_respects_cooldown(self):
-        recycle_count = 0
-        last_vpn_recycle = 0
-        cooldown = netbuoy.VPN_RECYCLE_COOLDOWN
+    def test_notifies_once_per_incident(self):
+        notify_count = 0
+        vpn_notified = False
 
-        # Simulate ticks at 100, 110, 120, 130, 140 seconds
-        # First recycle at t=100 (100-0 >= 30), next at t=130 (130-100 >= 30)
-        for t in [100, 110, 120, 130, 140]:
-            now = t
-            connected = True
+        # Simulate multiple ticks with VPN unprotected
+        for _ in range(5):
             vpn_protecting = False
-            if connected and (now - last_vpn_recycle >= cooldown):
-                recycle_count += 1
-                last_vpn_recycle = now
+            if not vpn_protecting and not vpn_notified:
+                notify_count += 1
+                vpn_notified = True
 
-        # Should recycle at t=100 and t=130
-        assert recycle_count == 2
+        assert notify_count == 1
 
-    def test_no_recycle_when_disconnected(self):
-        recycled = False
-        connected = False
-        if connected:
-            recycled = True
-        assert recycled is False
+    def test_resets_when_vpn_recovers(self):
+        vpn_notified = True
+        vpn_protecting = True
+        if vpn_protecting:
+            vpn_notified = False
+        assert vpn_notified is False
+
+    def test_notifies_again_after_recovery_and_drop(self):
+        notify_count = 0
+        vpn_notified = False
+
+        # First drop
+        if not vpn_notified:
+            notify_count += 1
+            vpn_notified = True
+
+        # Recovery
+        vpn_notified = False
+
+        # Second drop
+        if not vpn_notified:
+            notify_count += 1
+            vpn_notified = True
+
+        assert notify_count == 2

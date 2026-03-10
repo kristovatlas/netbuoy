@@ -17,7 +17,6 @@ INTERVAL=2
 KEEP_WIFI=false
 NO_VPN=false
 NO_KILL=false
-VPN_RECYCLE_COOLDOWN=30
 VPN_VERIFY_INTERVAL=60
 VPN_CHECK_URL="https://ipinfo.io/json"
 
@@ -75,9 +74,9 @@ fi
 TOTAL_CHECKS=0
 OK_CHECKS=0
 SESSION_START=$(date +%s)
-LAST_VPN_RECYCLE=0
 LAST_VPN_VERIFY=0
 TRANSMISSION_KILLED=false
+VPN_NOTIFIED=false
 BASELINE_IP=""
 VPN_TUNNEL=false
 VPN_VERIFIED=""
@@ -177,19 +176,19 @@ verify_vpn_ip() {
     return 0
 }
 
-VPN_HELPER_APP="$HOME/.local/share/netbuoy/NetbuoyVPNHelper.app"
-
-recycle_vpn() {
-    local now
-    now=$(date +%s)
-    if [ $((now - LAST_VPN_RECYCLE)) -lt "$VPN_RECYCLE_COOLDOWN" ]; then
+notify_vpn_unprotected() {
+    local tunnel_up="$1"
+    if [ "$VPN_NOTIFIED" = true ]; then
         return
     fi
-    LAST_VPN_RECYCLE=$now
-
-    if [ -d "$VPN_HELPER_APP" ]; then
-        open -W "$VPN_HELPER_APP" 2>/dev/null || true
+    VPN_NOTIFIED=true
+    local msg
+    if [ "$tunnel_up" = true ]; then
+        msg="VPN tunnel is up but your IP is NOT protected — reconnect in Proton VPN"
+    else
+        msg="VPN is down — reconnect in Proton VPN"
     fi
+    osascript -e "display notification \"$msg\" with title \"netbuoy\" sound name \"Basso\"" 2>/dev/null || true
 }
 
 kill_transmission() {
@@ -377,12 +376,11 @@ while true; do
                 kill_transmission
                 TRANSMISSION_KILLED=true
             fi
-            # Recycle VPN if we have network
-            if [ "$CONNECTED" = true ]; then
-                recycle_vpn
-            fi
+            # Notify user (once per incident)
+            notify_vpn_unprotected "$VPN_TUNNEL"
         else
             TRANSMISSION_KILLED=false
+            VPN_NOTIFIED=false
         fi
     fi
 

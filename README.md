@@ -13,7 +13,7 @@ Real-time network connectivity monitor and healer for macOS. Tracks uptime, mana
 - **Connectivity monitoring** — Pings privacy-friendly targets (Cloudflare 1.1.1.1, Quad9 9.9.9.9) every 2 seconds
 - **Uptime tracking** — Rolling windows (1min, 1hr, 1day, session, all-time) with SQLite-backed history
 - **Dual VPN verification** — Fast local tunnel check + empirical IP verification via ipinfo.io ASN matching
-- **VPN auto-heal** — Clicks Quick Connect in Proton VPN via macOS accessibility when tunnel drops
+- **VPN drop alert** — macOS notification with sound when VPN is down or tunnel is up but IP is unprotected
 - **Safety kill** — Kills Transmission.app when VPN is not verified to prevent data leakage
 - **WiFi management** — Turns off WiFi by default (Ethernet-first)
 - **Speed tests** — Periodic bandwidth measurement via speedtest-cli or Cloudflare fallback
@@ -33,21 +33,6 @@ Make sure `~/.local/bin` is in your `PATH`. Add to your shell profile if needed:
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
-
-### VPN auto-reconnect setup
-
-The installer can optionally build a small helper app (`NetbuoyVPNHelper.app`)
-that clicks Quick Connect in Proton VPN via the macOS accessibility API.
-If you choose to build it during install, grant accessibility permission to
-**only** the helper app (not your terminal):
-
-1. Open **System Settings > Privacy & Security > Accessibility**
-2. Click **+**, press **Cmd+Shift+G**, paste `~/.local/share/netbuoy/NetbuoyVPNHelper.app`
-3. Toggle it on
-
-This follows least-privilege — only the single-purpose helper app gets
-accessibility access. If you skip this step, VPN monitoring still works but
-auto-reconnect will not.
 
 ## Usage
 

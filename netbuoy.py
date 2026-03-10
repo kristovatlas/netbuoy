@@ -25,7 +25,6 @@ DEFAULT_INTERVAL = 2  # seconds between pings
 DEFAULT_SPEED_INTERVAL = 5  # minutes between speed tests
 DB_DIR = Path.home() / ".netbuoy"
 DB_PATH = DB_DIR / "history.db"
-VPN_RECYCLE_COOLDOWN = 30  # seconds between VPN recycle attempts
 VPN_VERIFY_INTERVAL = 60  # seconds between IP-based VPN verification checks
 VPN_CHECK_URL = "https://ipinfo.io/json"  # Free, no API key, returns ASN/org info
 
@@ -342,18 +341,19 @@ def verify_vpn_ip(baseline_ip=None):
         return None
 
 
-VPN_HELPER_APP = Path.home() / ".local" / "share" / "netbuoy" / "NetbuoyVPNHelper.app"
-
-
-def recycle_vpn():
-    """Attempt to reconnect Proton VPN via the NetbuoyVPNHelper app."""
+def notify_vpn_unprotected(tunnel_up=False):
+    """Send a macOS notification that VPN is not protecting traffic."""
+    if tunnel_up:
+        msg = "VPN tunnel is up but your IP is NOT protected — reconnect in Proton VPN"
+    else:
+        msg = "VPN is down — reconnect in Proton VPN"
     try:
-        if not VPN_HELPER_APP.exists():
-            return
         subprocess.run(
-            ["open", "-W", str(VPN_HELPER_APP)],
+            ["osascript", "-e",
+             f'display notification "{msg}" '
+             f'with title "netbuoy" sound name "Basso"'],
             capture_output=True,
-            timeout=15,
+            timeout=5,
         )
     except (subprocess.TimeoutExpired, FileNotFoundError):
         pass
@@ -634,10 +634,10 @@ def main_loop(stdscr, args):
     conn = init_db()
     start_time = time.time()
     last_speed_test = 0
-    last_vpn_recycle = 0
     last_vpn_verify = 0
     speed_result = latest_speed(conn)
     transmission_killed = False
+    vpn_notified = False
     baseline_ip = None  # First IP seen without VPN tunnel — assumed to be ISP IP
     speed_thread_running = False
     db_lock = threading.Lock()
@@ -733,12 +733,13 @@ def main_loop(stdscr, args):
                     kill_transmission()
                     transmission_killed = True
 
-                # Recycle VPN if we have network but no VPN
-                if state["connected"] and (now - last_vpn_recycle >= VPN_RECYCLE_COOLDOWN):
-                    recycle_vpn()
-                    last_vpn_recycle = now
+                # Notify user (once per incident)
+                if not vpn_notified:
+                    notify_vpn_unprotected(tunnel_up=vpn_tunnel)
+                    vpn_notified = True
             else:
                 transmission_killed = False
+                vpn_notified = False
 
         # Uptime stats
         with db_lock:
