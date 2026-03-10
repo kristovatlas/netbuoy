@@ -366,6 +366,8 @@ while true; do
             VPN_TUNNEL=true
         else
             VPN_TUNNEL=false
+            # Tunnel dropped — invalidate stale IP verification so we react immediately
+            VPN_VERIFIED=""
         fi
 
         # Periodic IP verification

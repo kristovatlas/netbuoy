@@ -709,6 +709,9 @@ def main_loop(stdscr, args):
                 vpn_tunnel = is_vpn_connected()
                 state["vpn_tunnel"] = vpn_tunnel
                 last_vpn_tunnel_check = now
+                # Tunnel dropped — invalidate stale IP verification so we react immediately
+                if not vpn_tunnel:
+                    state["vpn_verified"] = None
             vpn_tunnel = state["vpn_tunnel"]
 
             # Periodic empirical IP check
