@@ -6,13 +6,13 @@ import Cocoa
 func clickQuickConnect() {
     let workspace = NSWorkspace.shared
 
-    // Check accessibility permission
+    // Check accessibility permission — prompt if not granted
     let trusted = AXIsProcessTrustedWithOptions(
-        [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): false] as CFDictionary
+        [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
     )
     if !trusted {
-        fputs("Error: Accessibility permission not granted for NetbuoyVPNHelper\n", stderr)
-        fputs("Grant access in: System Settings > Privacy & Security > Accessibility\n", stderr)
+        fputs("Accessibility permission required. macOS should have opened the settings dialog.\n", stderr)
+        fputs("After granting access, run this again.\n", stderr)
         exit(1)
     }
 
