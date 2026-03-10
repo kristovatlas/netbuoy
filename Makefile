@@ -1,7 +1,7 @@
 PREFIX ?= $(HOME)/.local/bin
 DATADIR ?= $(HOME)/.local/share/netbuoy
 VENV ?= $(DATADIR)/venv
-HELPER_APP ?= $(DATADIR)/NetbuoyVPNHelper.app
+HELPER ?= $(DATADIR)/NetbuoyVPNHelper
 SHELL_RC ?= $(if $(wildcard $(HOME)/.zshrc),$(HOME)/.zshrc,$(HOME)/.bash_profile)
 
 .PHONY: install install-sh uninstall ensure-path build-helper
@@ -17,17 +17,24 @@ ensure-path:
 
 build-helper:
 	@mkdir -p $(DATADIR)
-	@if command -v osacompile >/dev/null 2>&1; then \
-		echo "Building VPN helper app..."; \
-		osacompile -o $(HELPER_APP) helpers/vpn-reconnect.applescript; \
-		echo "Built $(HELPER_APP)"; \
-		echo ""; \
-		echo ">>> Grant accessibility to NetbuoyVPNHelper:"; \
-		echo ">>>   System Settings > Privacy & Security > Accessibility"; \
-		echo ">>>   Click +, navigate to $(HELPER_APP)"; \
-		echo ""; \
+	@if command -v swiftc >/dev/null 2>&1; then \
+		printf "Build VPN auto-reconnect helper? (requires Accessibility permission) [y/N] "; \
+		read ans; \
+		if [ "$$ans" = "y" ] || [ "$$ans" = "Y" ]; then \
+			echo "Building VPN helper..."; \
+			swiftc -O -o $(HELPER) helpers/vpn-reconnect.swift \
+				-framework Cocoa -framework ApplicationServices; \
+			echo "Built $(HELPER)"; \
+			echo ""; \
+			echo ">>> Grant accessibility to NetbuoyVPNHelper:"; \
+			echo ">>>   System Settings > Privacy & Security > Accessibility"; \
+			echo ">>>   Click +, navigate to $(HELPER)"; \
+			echo ""; \
+		else \
+			echo "Skipping VPN helper. VPN monitoring will work but auto-reconnect will not."; \
+		fi; \
 	else \
-		echo "Warning: osacompile not found (not macOS?); VPN reconnect will not work"; \
+		echo "Note: swiftc not found; skipping VPN auto-reconnect helper."; \
 	fi
 
 install: ensure-path build-helper

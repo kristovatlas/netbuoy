@@ -36,13 +36,14 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ### VPN auto-reconnect setup
 
-The installer builds a small helper app (`NetbuoyVPNHelper.app`) that clicks
-Quick Connect in Proton VPN. To allow this, grant accessibility permission to
-**only** the helper app (not your terminal):
+The installer can optionally build a small helper binary (`NetbuoyVPNHelper`)
+that clicks Quick Connect in Proton VPN via the macOS accessibility API.
+If you choose to build it during install, grant accessibility permission to
+**only** the helper (not your terminal):
 
 1. Open **System Settings > Privacy & Security > Accessibility**
 2. Click **+**
-3. Navigate to `~/.local/share/netbuoy/NetbuoyVPNHelper.app` and add it
+3. Navigate to `~/.local/share/netbuoy/NetbuoyVPNHelper` and add it
 
 This follows least-privilege — only the single-purpose helper gets accessibility
 access. If you skip this step, VPN monitoring still works but auto-reconnect

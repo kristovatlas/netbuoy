@@ -342,16 +342,16 @@ def verify_vpn_ip(baseline_ip=None):
         return None
 
 
-VPN_HELPER_APP = Path.home() / ".local" / "share" / "netbuoy" / "NetbuoyVPNHelper.app"
+VPN_HELPER = Path.home() / ".local" / "share" / "netbuoy" / "NetbuoyVPNHelper"
 
 
 def recycle_vpn():
-    """Attempt to reconnect Proton VPN via the NetbuoyVPNHelper app."""
+    """Attempt to reconnect Proton VPN via the NetbuoyVPNHelper binary."""
     try:
-        if not VPN_HELPER_APP.exists():
+        if not VPN_HELPER.exists():
             return
         subprocess.run(
-            ["open", "-W", str(VPN_HELPER_APP)],
+            [str(VPN_HELPER)],
             capture_output=True,
             timeout=15,
         )
