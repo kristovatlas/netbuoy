@@ -47,7 +47,7 @@ install: ensure-path build-helper
 	@chmod 755 $(PREFIX)/netbuoy
 	@echo "Done. Run 'netbuoy' to start."
 
-install-sh: ensure-path build-helper
+install-sh: ensure-path
 	@mkdir -p $(PREFIX)
 	@echo "Installing shell-only netbuoy to $(PREFIX)/netbuoy..."
 	@install -m 755 netbuoy.sh $(PREFIX)/netbuoy
