@@ -177,7 +177,7 @@ verify_vpn_ip() {
     return 0
 }
 
-VPN_HELPER="$HOME/.local/share/netbuoy/NetbuoyVPNHelper"
+VPN_HELPER_APP="$HOME/.local/share/netbuoy/NetbuoyVPNHelper.app"
 
 recycle_vpn() {
     local now
@@ -187,8 +187,8 @@ recycle_vpn() {
     fi
     LAST_VPN_RECYCLE=$now
 
-    if [ -x "$VPN_HELPER" ]; then
-        "$VPN_HELPER" 2>/dev/null || true
+    if [ -d "$VPN_HELPER_APP" ]; then
+        open -W "$VPN_HELPER_APP" 2>/dev/null || true
     fi
 }
 

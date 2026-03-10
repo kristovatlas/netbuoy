@@ -1,7 +1,8 @@
 PREFIX ?= $(HOME)/.local/bin
 DATADIR ?= $(HOME)/.local/share/netbuoy
 VENV ?= $(DATADIR)/venv
-HELPER ?= $(DATADIR)/NetbuoyVPNHelper
+HELPER_APP ?= $(DATADIR)/NetbuoyVPNHelper.app
+HELPER_BIN ?= $(HELPER_APP)/Contents/MacOS/NetbuoyVPNHelper
 SHELL_RC ?= $(if $(wildcard $(HOME)/.zshrc),$(HOME)/.zshrc,$(HOME)/.bash_profile)
 
 .PHONY: install install-sh uninstall ensure-path build-helper
@@ -21,14 +22,16 @@ build-helper:
 		printf "Build VPN auto-reconnect helper? (requires Accessibility permission) [y/N] "; \
 		read ans; \
 		if [ "$$ans" = "y" ] || [ "$$ans" = "Y" ]; then \
-			echo "Building VPN helper..."; \
-			swiftc -O -o $(HELPER) helpers/vpn-reconnect.swift \
+			echo "Building VPN helper app..."; \
+			mkdir -p $(HELPER_APP)/Contents/MacOS; \
+			swiftc -O -o $(HELPER_BIN) helpers/vpn-reconnect.swift \
 				-framework Cocoa -framework ApplicationServices; \
-			echo "Built $(HELPER)"; \
+			cp helpers/Info.plist $(HELPER_APP)/Contents/Info.plist; \
+			echo "Built $(HELPER_APP)"; \
 			echo ""; \
 			echo ">>> Grant accessibility to NetbuoyVPNHelper:"; \
 			echo ">>>   System Settings > Privacy & Security > Accessibility"; \
-			echo ">>>   Click +, navigate to $(HELPER)"; \
+			echo ">>>   Click +, navigate to $(HELPER_APP)"; \
 			echo ""; \
 		else \
 			echo "Skipping VPN helper. VPN monitoring will work but auto-reconnect will not."; \

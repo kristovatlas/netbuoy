@@ -191,33 +191,35 @@ lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 16384
 
 
 class TestRecycleVpn:
-    def test_calls_helper_binary(self, tmp_path):
-        helper = tmp_path / "NetbuoyVPNHelper"
-        helper.touch()
-        with mock.patch.object(netbuoy, "VPN_HELPER", helper), \
+    def test_calls_open_with_helper_app(self, tmp_path):
+        helper = tmp_path / "NetbuoyVPNHelper.app"
+        helper.mkdir()
+        with mock.patch.object(netbuoy, "VPN_HELPER_APP", helper), \
              mock.patch("subprocess.run") as mock_run:
             netbuoy.recycle_vpn()
             mock_run.assert_called_once()
             cmd = mock_run.call_args[0][0]
-            assert "NetbuoyVPNHelper" in cmd[0]
+            assert cmd[0] == "open"
+            assert cmd[1] == "-W"
+            assert "NetbuoyVPNHelper.app" in cmd[2]
 
     def test_skips_when_helper_missing(self):
-        with mock.patch.object(netbuoy, "VPN_HELPER", Path("/nonexistent/helper")), \
+        with mock.patch.object(netbuoy, "VPN_HELPER_APP", Path("/nonexistent/app")), \
              mock.patch("subprocess.run") as mock_run:
             netbuoy.recycle_vpn()
             mock_run.assert_not_called()
 
     def test_handles_helper_not_found(self, tmp_path):
-        helper = tmp_path / "NetbuoyVPNHelper"
-        helper.touch()
-        with mock.patch.object(netbuoy, "VPN_HELPER", helper), \
+        helper = tmp_path / "NetbuoyVPNHelper.app"
+        helper.mkdir()
+        with mock.patch.object(netbuoy, "VPN_HELPER_APP", helper), \
              mock.patch("subprocess.run", side_effect=FileNotFoundError()):
             netbuoy.recycle_vpn()  # Should not raise
 
     def test_handles_timeout(self, tmp_path):
-        helper = tmp_path / "NetbuoyVPNHelper"
-        helper.touch()
-        with mock.patch.object(netbuoy, "VPN_HELPER", helper), \
+        helper = tmp_path / "NetbuoyVPNHelper.app"
+        helper.mkdir()
+        with mock.patch.object(netbuoy, "VPN_HELPER_APP", helper), \
              mock.patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 15)):
             netbuoy.recycle_vpn()  # Should not raise
 
