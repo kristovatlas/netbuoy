@@ -14,7 +14,6 @@ import netbuoy
 def make_args(**overrides):
     defaults = {
         "keep_wifi": True,
-        "vpn_mode": "fastest",
         "ping_target": "1.1.1.1",
         "no_vpn": False,
         "no_kill": False,

@@ -15,7 +15,6 @@ PING_TARGET="1.1.1.1"
 FALLBACK_TARGET="9.9.9.9"
 INTERVAL=2
 KEEP_WIFI=false
-VPN_MODE="fastest"
 NO_VPN=false
 NO_KILL=false
 VPN_RECYCLE_COOLDOWN=30
@@ -34,7 +33,6 @@ Network connectivity monitor & healer for macOS (shell version).
 
 Options:
   --keep-wifi          Don't turn off WiFi on start
-  --vpn-mode MODE      VPN reconnect mode: fastest or random (default: fastest)
   --ping-target HOST   Ping target (default: 1.1.1.1)
   --no-vpn             Disable VPN monitoring
   --no-kill            Don't kill Transmission.app when VPN is down
@@ -47,7 +45,6 @@ EOF
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --keep-wifi) KEEP_WIFI=true; shift ;;
-        --vpn-mode) VPN_MODE="$2"; shift 2 ;;
         --ping-target) PING_TARGET="$2"; shift 2 ;;
         --no-vpn) NO_VPN=true; shift ;;
         --no-kill) NO_KILL=true; shift ;;
@@ -180,6 +177,8 @@ verify_vpn_ip() {
     return 0
 }
 
+VPN_HELPER_APP="$HOME/.local/share/netbuoy/NetbuoyVPNHelper.app"
+
 recycle_vpn() {
     local now
     now=$(date +%s)
@@ -188,22 +187,9 @@ recycle_vpn() {
     fi
     LAST_VPN_RECYCLE=$now
 
-    local mode_label="Fastest"
-    [ "$VPN_MODE" = "random" ] && mode_label="Random"
-
-    osascript -e "
-    tell application \"Proton VPN\" to activate
-    delay 1
-    tell application \"System Events\"
-        tell process \"ProtonVPN\"
-            try
-                click menu bar item 1 of menu bar 2
-                delay 0.5
-                click menu item \"$mode_label\" of menu 1 of menu bar item 1 of menu bar 2
-            end try
-        end tell
-    end tell
-    " 2>/dev/null || true
+    if [ -d "$VPN_HELPER_APP" ]; then
+        open -W "$VPN_HELPER_APP" 2>/dev/null || true
+    fi
 }
 
 kill_transmission() {

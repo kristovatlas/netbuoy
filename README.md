@@ -13,7 +13,7 @@ Real-time network connectivity monitor and healer for macOS. Tracks uptime, mana
 - **Connectivity monitoring** — Pings privacy-friendly targets (Cloudflare 1.1.1.1, Quad9 9.9.9.9) every 2 seconds
 - **Uptime tracking** — Rolling windows (1min, 1hr, 1day, session, all-time) with SQLite-backed history
 - **Dual VPN verification** — Fast local tunnel check + empirical IP verification via ipinfo.io ASN matching
-- **VPN auto-heal** — Reconnects Proton VPN when the tunnel drops but network is up
+- **VPN auto-heal** — Clicks Quick Connect in Proton VPN via macOS accessibility when tunnel drops
 - **Safety kill** — Kills Transmission.app when VPN is not verified to prevent data leakage
 - **WiFi management** — Turns off WiFi by default (Ethernet-first)
 - **Speed tests** — Periodic bandwidth measurement via speedtest-cli or Cloudflare fallback
@@ -34,6 +34,20 @@ Make sure `~/.local/bin` is in your `PATH`. Add to your shell profile if needed:
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
+### VPN auto-reconnect setup
+
+The installer builds a small helper app (`NetbuoyVPNHelper.app`) that clicks
+Quick Connect in Proton VPN. To allow this, grant accessibility permission to
+**only** the helper app (not your terminal):
+
+1. Open **System Settings > Privacy & Security > Accessibility**
+2. Click **+**
+3. Navigate to `~/.local/share/netbuoy/NetbuoyVPNHelper.app` and add it
+
+This follows least-privilege — only the single-purpose helper gets accessibility
+access. If you skip this step, VPN monitoring still works but auto-reconnect
+will not.
+
 ## Usage
 
 ```bash
@@ -41,7 +55,6 @@ netbuoy                          # Default: WiFi off, VPN managed, Transmission 
 netbuoy --keep-wifi              # Leave WiFi on
 netbuoy --no-vpn                 # Disable VPN monitoring
 netbuoy --no-kill                # Don't kill Transmission
-netbuoy --vpn-mode random        # Reconnect to random Proton VPN server
 netbuoy --interval 1             # Ping every second
 netbuoy --speed-interval 10      # Speed test every 10 minutes
 netbuoy --ping-target 9.9.9.9    # Custom ping target

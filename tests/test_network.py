@@ -3,6 +3,7 @@
 All subprocess calls are mocked — these tests run on any platform.
 """
 import subprocess
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -190,27 +191,36 @@ lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 16384
 
 
 class TestRecycleVpn:
-    def test_calls_osascript_fastest(self):
-        with mock.patch("subprocess.run") as mock_run:
-            netbuoy.recycle_vpn("fastest")
+    def test_calls_open_with_helper_app(self, tmp_path):
+        helper = tmp_path / "NetbuoyVPNHelper.app"
+        helper.mkdir()
+        with mock.patch.object(netbuoy, "VPN_HELPER_APP", helper), \
+             mock.patch("subprocess.run") as mock_run:
+            netbuoy.recycle_vpn()
             mock_run.assert_called_once()
             cmd = mock_run.call_args[0][0]
-            assert cmd[0] == "osascript"
-            script = cmd[2]
-            assert "Fastest" in script
+            assert cmd[0] == "open"
+            assert cmd[1] == "-W"
+            assert "NetbuoyVPNHelper.app" in cmd[2]
 
-    def test_calls_osascript_random(self):
-        with mock.patch("subprocess.run") as mock_run:
-            netbuoy.recycle_vpn("random")
-            script = mock_run.call_args[0][0][2]
-            assert "Random" in script
+    def test_skips_when_helper_missing(self):
+        with mock.patch.object(netbuoy, "VPN_HELPER_APP", Path("/nonexistent/app")), \
+             mock.patch("subprocess.run") as mock_run:
+            netbuoy.recycle_vpn()
+            mock_run.assert_not_called()
 
-    def test_handles_osascript_not_found(self):
-        with mock.patch("subprocess.run", side_effect=FileNotFoundError()):
+    def test_handles_helper_not_found(self, tmp_path):
+        helper = tmp_path / "NetbuoyVPNHelper.app"
+        helper.mkdir()
+        with mock.patch.object(netbuoy, "VPN_HELPER_APP", helper), \
+             mock.patch("subprocess.run", side_effect=FileNotFoundError()):
             netbuoy.recycle_vpn()  # Should not raise
 
-    def test_handles_timeout(self):
-        with mock.patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 15)):
+    def test_handles_timeout(self, tmp_path):
+        helper = tmp_path / "NetbuoyVPNHelper.app"
+        helper.mkdir()
+        with mock.patch.object(netbuoy, "VPN_HELPER_APP", helper), \
+             mock.patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 15)):
             netbuoy.recycle_vpn()  # Should not raise
 
 

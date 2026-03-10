@@ -342,26 +342,16 @@ def verify_vpn_ip(baseline_ip=None):
         return None
 
 
-def recycle_vpn(mode="fastest"):
-    """Attempt to reconnect Proton VPN via AppleScript."""
-    mode_label = "Fastest" if mode == "fastest" else "Random"
-    script = f'''
-    tell application "Proton VPN" to activate
-    delay 1
-    tell application "System Events"
-        tell process "ProtonVPN"
-            -- Click Quick Connect or menu bar connect
-            try
-                click menu bar item 1 of menu bar 2
-                delay 0.5
-                click menu item "{mode_label}" of menu 1 of menu bar item 1 of menu bar 2
-            end try
-        end tell
-    end tell
-    '''
+VPN_HELPER_APP = Path.home() / ".local" / "share" / "netbuoy" / "NetbuoyVPNHelper.app"
+
+
+def recycle_vpn():
+    """Attempt to reconnect Proton VPN via the NetbuoyVPNHelper app."""
     try:
+        if not VPN_HELPER_APP.exists():
+            return
         subprocess.run(
-            ["osascript", "-e", script],
+            ["open", "-W", str(VPN_HELPER_APP)],
             capture_output=True,
             timeout=15,
         )
@@ -745,7 +735,7 @@ def main_loop(stdscr, args):
 
                 # Recycle VPN if we have network but no VPN
                 if state["connected"] and (now - last_vpn_recycle >= VPN_RECYCLE_COOLDOWN):
-                    recycle_vpn(args.vpn_mode)
+                    recycle_vpn()
                     last_vpn_recycle = now
             else:
                 transmission_killed = False
@@ -802,12 +792,6 @@ def main():
         "--keep-wifi",
         action="store_true",
         help="Don't turn off WiFi on start",
-    )
-    parser.add_argument(
-        "--vpn-mode",
-        choices=["fastest", "random"],
-        default="fastest",
-        help="VPN reconnect mode (default: fastest)",
     )
     parser.add_argument(
         "--ping-target",

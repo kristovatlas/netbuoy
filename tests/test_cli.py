@@ -19,7 +19,6 @@ def _make_parser():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--keep-wifi", action="store_true")
-    parser.add_argument("--vpn-mode", choices=["fastest", "random"], default="fastest")
     parser.add_argument("--ping-target", default=netbuoy.DEFAULT_PING_TARGET)
     parser.add_argument("--no-vpn", action="store_true")
     parser.add_argument("--no-kill", action="store_true")
@@ -40,10 +39,6 @@ class TestDefaults:
     def test_default_ping_target(self):
         args = parse_args([])
         assert args.ping_target == "1.1.1.1"
-
-    def test_default_vpn_mode(self):
-        args = parse_args([])
-        assert args.vpn_mode == "fastest"
 
     def test_default_keep_wifi_false(self):
         args = parse_args([])
@@ -70,18 +65,6 @@ class TestFlags:
     def test_no_kill(self):
         args = parse_args(["--no-kill"])
         assert args.no_kill is True
-
-    def test_vpn_mode_random(self):
-        args = parse_args(["--vpn-mode", "random"])
-        assert args.vpn_mode == "random"
-
-    def test_vpn_mode_fastest(self):
-        args = parse_args(["--vpn-mode", "fastest"])
-        assert args.vpn_mode == "fastest"
-
-    def test_vpn_mode_invalid(self):
-        with pytest.raises(SystemExit):
-            parse_args(["--vpn-mode", "invalid"])
 
     def test_custom_ping_target(self):
         args = parse_args(["--ping-target", "8.8.8.8"])
