@@ -257,63 +257,75 @@ format_duration() {
 # ---------------------------------------------------------------------------
 
 render() {
-    clear
+    # Move cursor to top-left instead of clearing — eliminates flicker
+    tput cup 0 0 2>/dev/null || printf "\033[H"
+    local el
+    el=$(tput el 2>/dev/null) || el=$'\033[K'  # clear to end of line
 
     local now
     now=$(date +%s)
     local runtime=$((now - SESSION_START))
 
     # Header
-    printf "\033[1;7m NETBUOY \033[0m \033[2mNetwork Monitor  uptime: %s\033[0m\n" "$(format_duration $runtime)"
-    echo ""
+    printf "\033[1;7m NETBUOY \033[0m \033[2mNetwork Monitor  uptime: %s\033[0m%s\n" "$(format_duration $runtime)" "$el"
+    printf "%s\n" "$el"
 
     # Connection status
     if [ "$CONNECTED" = true ]; then
         printf "\033[1;42;37m CONNECTED \033[0m"
         [ -n "$LATENCY" ] && printf " \033[32m%sms\033[0m" "$LATENCY"
-        echo ""
+        printf "%s\n" "$el"
     else
-        printf "\033[1;41;37m DISCONNECTED \033[0m\n"
+        printf "\033[1;41;37m DISCONNECTED \033[0m%s\n" "$el"
     fi
 
     # VPN status
     if [ "$NO_VPN" = false ]; then
         # Tunnel status
         if [ "$VPN_TUNNEL" = true ]; then
-            printf "\033[1;42;37m TUNNEL \033[0m \033[32mUp\033[0m\n"
+            printf "\033[1;42;37m TUNNEL \033[0m \033[32mUp\033[0m%s\n" "$el"
         else
-            printf "\033[1;41;37m TUNNEL \033[0m \033[1;31mDown\033[0m\n"
+            printf "\033[1;41;37m TUNNEL \033[0m \033[1;31mDown\033[0m%s\n" "$el"
         fi
         # IP verification status
         if [ -z "$VPN_VERIFIED" ]; then
-            printf "\033[1;43;30m VPN IP \033[0m \033[33mChecking...\033[0m\n"
+            printf "\033[1;43;30m VPN IP \033[0m \033[33mChecking...\033[0m%s\n" "$el"
         elif [ "$VPN_VERIFIED" = true ]; then
-            printf "\033[1;42;37m VPN IP \033[0m \033[32mVerified  %s  (%s)\033[0m\n" "$VPN_IP" "$VPN_ORG"
+            printf "\033[1;42;37m VPN IP \033[0m \033[32mVerified  %s  (%s)\033[0m%s\n" "$VPN_IP" "$VPN_ORG" "$el"
         else
-            printf "\033[1;41;37m VPN IP \033[0m \033[1;31mNOT Protected  (%s)\033[0m\n" "$VPN_ORG"
+            printf "\033[1;41;37m VPN IP \033[0m \033[1;31mNOT Protected  (%s)\033[0m%s\n" "$VPN_ORG" "$el"
         fi
     fi
-    echo ""
+    printf "%s\n" "$el"
 
     # Session uptime
     local pct="--"
     if [ "$TOTAL_CHECKS" -gt 0 ]; then
         pct=$(awk "BEGIN { printf \"%.1f\", ($OK_CHECKS / $TOTAL_CHECKS) * 100 }")
     fi
-    printf "\033[1;4mUptime (session):\033[0m\n"
-    printf "  %s%% (%d/%d checks)\n" "$pct" "$OK_CHECKS" "$TOTAL_CHECKS"
-    echo ""
+    printf "\033[1;4mUptime (session):\033[0m%s\n" "$el"
+    printf "  %s%% (%d/%d checks)%s\n" "$pct" "$OK_CHECKS" "$TOTAL_CHECKS" "$el"
+    printf "%s\n" "$el"
 
     # Interfaces
     get_interfaces
     if [ -n "$IFACE_INFO" ]; then
-        printf "\033[1;4mInterfaces:\033[0m\n"
-        printf "%b" "$IFACE_INFO"
-        echo ""
+        printf "\033[1;4mInterfaces:\033[0m%s\n" "$el"
+        # Print each interface line with clear-to-eol
+        while IFS= read -r iface_line; do
+            [ -n "$iface_line" ] && printf "%s%s\n" "$iface_line" "$el"
+        done <<< "$(printf "%b" "$IFACE_INFO")"
+        printf "%s\n" "$el"
     fi
 
     # Footer
-    printf "\033[2mq: quit  |  ping: %s  |  Ctrl+C to exit\033[0m\n" "$PING_TARGET"
+    printf "\033[2mq: quit  |  ping: %s  |  Ctrl+C to exit\033[0m%s\n" "$PING_TARGET" "$el"
+
+    # Clear any leftover lines from a previous longer render (e.g. interfaces disappeared)
+    local i
+    for i in 1 2 3; do
+        printf "%s\n" "$el"
+    done
 }
 
 # ---------------------------------------------------------------------------
@@ -340,8 +352,9 @@ cleanup() {
 }
 trap cleanup INT TERM
 
-# Hide cursor
+# Hide cursor and clear screen once at startup
 tput civis 2>/dev/null || true
+clear
 
 while true; do
     check_connectivity
