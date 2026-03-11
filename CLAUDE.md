@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Netbuoy is a macOS CLI utility that monitors network connectivity in real-time, monitors VPN state (Proton VPN), and protects against data leakage. It has two versions:
+Netbuoy is a macOS CLI network guardian that monitors connectivity in real-time, verifies VPN protection (Proton VPN), and guards against data leakage. It has two versions:
 
 - **`netbuoy.py`** — Full-featured Python version with curses UI, SQLite history, speed tests
 - **`netbuoy.sh`** — Minimal shell-only version with no dependencies (session stats only, no DB/speed tests)
