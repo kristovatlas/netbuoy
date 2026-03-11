@@ -8,6 +8,8 @@
 
 Real-time network connectivity monitor and guardian for macOS. Tracks uptime, verifies VPN protection (Proton VPN), and guards against data leakage.
 
+![netbuoy dashboard](docs/screenshot.png)
+
 ## Features
 
 - **Connectivity monitoring** — Pings privacy-friendly targets (Cloudflare 1.1.1.1, Quad9 9.9.9.9) every 2 seconds

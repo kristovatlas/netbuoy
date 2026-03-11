@@ -632,6 +632,24 @@ class Display:
 # ---------------------------------------------------------------------------
 
 
+DEMO_INTERFACES = [
+    {"port": "Ethernet", "device": "en0", "ip": "192.168.1.42", "active": True},
+    {"port": "Wi-Fi", "device": "en1", "ip": None, "active": False},
+    {"port": "Thunderbolt Bridge", "device": "bridge0", "ip": None, "active": False},
+]
+
+
+def redact_state(state):
+    """Return a copy of state with sensitive info replaced for screenshots."""
+    s = dict(state)
+    if s.get("vpn_ip"):
+        s["vpn_ip"] = "203.0.113.42"
+    if s.get("vpn_org"):
+        s["vpn_org"] = "AS12345 Acme VPN Provider"
+    s["interfaces"] = DEMO_INTERFACES
+    return s
+
+
 def main_loop(stdscr, args):
     display = Display(stdscr)
     conn = init_db()
@@ -773,7 +791,7 @@ def main_loop(stdscr, args):
             threading.Thread(target=_speed_worker, daemon=True).start()
 
         # Render
-        display.render(state)
+        display.render(redact_state(state) if args.demo else state)
 
         # Check for quit
         if display.check_quit():
@@ -822,6 +840,11 @@ def main():
         type=float,
         default=DEFAULT_INTERVAL,
         help=f"Ping interval in seconds (default: {DEFAULT_INTERVAL})",
+    )
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Redact sensitive info (IPs, org names) for screenshots",
     )
     parser.add_argument(
         "--speed-interval",
