@@ -6,7 +6,7 @@
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](https://github.com/kristovatlas/netbuoy)
 [![License](https://img.shields.io/github/license/kristovatlas/netbuoy)](https://github.com/kristovatlas/netbuoy/blob/main/LICENSE)
 
-Real-time network connectivity monitor and healer for macOS. Tracks uptime, manages VPN connections (Proton VPN), and protects against data leakage.
+Real-time network connectivity monitor and guardian for macOS. Tracks uptime, verifies VPN protection (Proton VPN), and guards against data leakage.
 
 ## Features
 

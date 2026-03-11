@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""netbuoy - Network connectivity monitor & healer for macOS."""
+"""netbuoy - Network connectivity monitor & guardian for macOS."""
 
 import argparse
 import curses
@@ -789,7 +789,7 @@ def main():
         print("Warning: netbuoy is designed for macOS. Some features may not work.", file=sys.stderr)
 
     parser = argparse.ArgumentParser(
-        description="netbuoy - Network connectivity monitor & healer for macOS",
+        description="netbuoy - Network connectivity monitor & guardian for macOS",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(

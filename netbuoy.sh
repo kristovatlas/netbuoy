@@ -1,5 +1,5 @@
 #!/bin/bash
-# netbuoy (shell version) - Network connectivity monitor & healer for macOS
+# netbuoy (shell version) - Network connectivity monitor & guardian for macOS
 # Minimal version with no dependencies beyond standard macOS tools.
 # No historical database or speed tests — session stats only.
 
@@ -30,7 +30,7 @@ usage() {
     cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
 
-Network connectivity monitor & healer for macOS (shell version).
+Network connectivity monitor & guardian for macOS (shell version).
 
 Options:
   --keep-wifi          Don't turn off WiFi on start
