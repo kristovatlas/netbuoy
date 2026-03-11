@@ -41,3 +41,50 @@ class TestFormatUptime:
 
     def test_low_value(self):
         assert netbuoy.format_uptime(1.2) == "  1.2%"
+
+
+class TestRedactState:
+    def _make_state(self):
+        return {
+            "vpn_ip": "98.76.54.32",
+            "vpn_org": "AS9009 M247 Europe SRL",
+            "interfaces": [
+                {"port": "USB 10/100/1000 LAN", "device": "en7", "ip": "10.0.0.5", "active": True},
+            ],
+            "connected": True,
+            "latency": 12.3,
+        }
+
+    def test_replaces_vpn_ip(self):
+        s = netbuoy.redact_state(self._make_state())
+        assert s["vpn_ip"] == "203.0.113.42"
+
+    def test_replaces_vpn_org(self):
+        s = netbuoy.redact_state(self._make_state())
+        assert s["vpn_org"] == "AS12345 Acme VPN Provider"
+
+    def test_replaces_interfaces(self):
+        s = netbuoy.redact_state(self._make_state())
+        assert s["interfaces"] == netbuoy.DEMO_INTERFACES
+
+    def test_preserves_other_fields(self):
+        s = netbuoy.redact_state(self._make_state())
+        assert s["connected"] is True
+        assert s["latency"] == 12.3
+
+    def test_does_not_mutate_original(self):
+        original = self._make_state()
+        netbuoy.redact_state(original)
+        assert original["vpn_ip"] == "98.76.54.32"
+
+    def test_handles_empty_vpn_ip(self):
+        state = self._make_state()
+        state["vpn_ip"] = ""
+        s = netbuoy.redact_state(state)
+        assert s["vpn_ip"] == ""
+
+    def test_handles_none_vpn_org(self):
+        state = self._make_state()
+        state["vpn_org"] = None
+        s = netbuoy.redact_state(state)
+        assert s["vpn_org"] is None
