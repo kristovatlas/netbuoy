@@ -7,6 +7,8 @@ set -euo pipefail
 # Note: functions that intentionally return non-zero (ping_check, is_vpn_connected)
 # must be called in conditional contexts (if/||) to avoid triggering set -e.
 
+VERSION="0.1.0"
+
 # ---------------------------------------------------------------------------
 # Defaults
 # ---------------------------------------------------------------------------
@@ -36,6 +38,7 @@ Options:
   --no-vpn             Disable VPN monitoring
   --no-kill            Don't kill Transmission.app when VPN is down
   --interval SEC       Ping interval in seconds (default: 2)
+  -v, --version        Show version
   -h, --help           Show this help
 EOF
     exit 0
@@ -43,6 +46,7 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        -v|--version) echo "netbuoy $VERSION"; exit 0 ;;
         --keep-wifi) KEEP_WIFI=true; shift ;;
         --ping-target) PING_TARGET="$2"; shift 2 ;;
         --no-vpn) NO_VPN=true; shift ;;
@@ -143,9 +147,9 @@ verify_vpn_ip() {
         return 1
     fi
 
-    # Parse IP and org (works without jq using grep/sed)
-    VPN_IP=$(echo "$json" | grep -oE '"ip"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"ip"[[:space:]]*:[[:space:]]*"//;s/"//')
-    VPN_ORG=$(echo "$json" | grep -oE '"org"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"org"[[:space:]]*:[[:space:]]*"//;s/"//')
+    # Parse IP and org (works without jq using grep/sed), strip control chars
+    VPN_IP=$(echo "$json" | grep -oE '"ip"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"ip"[[:space:]]*:[[:space:]]*"//;s/"//' | tr -cd '[:print:]' | cut -c1-45)
+    VPN_ORG=$(echo "$json" | grep -oE '"org"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"org"[[:space:]]*:[[:space:]]*"//;s/"//' | tr -cd '[:print:]' | cut -c1-100)
 
     local org_lower
     org_lower=$(echo "$VPN_ORG" | tr '[:upper:]' '[:lower:]')

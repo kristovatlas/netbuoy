@@ -28,11 +28,7 @@ make install-sh     # Shell-only version (no dependencies)
 make uninstall
 ```
 
-Make sure `~/.local/bin` is in your `PATH`. Add to your shell profile if needed:
-
-```bash
-export PATH="$HOME/.local/bin:$PATH"
-```
+The installer automatically adds `~/.local/bin` to your `PATH` if needed.
 
 ## Usage
 
@@ -49,7 +45,7 @@ netbuoy --ping-target 9.9.9.9    # Custom ping target
 ## Testing
 
 ```bash
-python3 -m pytest tests/ -v              # Run all 113 tests
+python3 -m pytest tests/ -v              # Run all 120 tests
 python3 -m pytest tests/ --cov=netbuoy   # With coverage report
 bash -n netbuoy.sh                       # Shell syntax check
 ```

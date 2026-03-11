@@ -23,12 +23,12 @@ These test pure logic with no system dependencies. Run with `python3 -m pytest t
 - Session uptime vs all-time uptime diverge correctly
 
 ### CLI argument parsing
-- Default values: interval=2, speed-interval=5, ping-target=1.1.1.1, vpn-mode=fastest
+- Default values: interval=2, speed-interval=5, ping-target=1.1.1.1
 - `--keep-wifi` sets flag
 - `--no-vpn` disables VPN monitoring
 - `--no-kill` disables Transmission kill
-- `--vpn-mode random` accepted, invalid values rejected
 - `--interval` and `--speed-interval` accept floats
+- `--version` prints version and exits
 - `--help` exits 0
 
 ### VPN IP verification logic
@@ -40,6 +40,7 @@ These test pure logic with no system dependencies. Run with `python3 -m pytest t
 - Baseline IP is learned only when tunnel is down
 - Keyword matching is case-insensitive
 - All keywords in `VPN_ORG_KEYWORDS` are lowercase
+- API response data is sanitized (control chars stripped, truncated)
 
 ### Display helpers
 - `format_duration()`: 45→"45s", 90→"1m 30s", 3661→"1h 1m"
@@ -49,6 +50,13 @@ These test pure logic with no system dependencies. Run with `python3 -m pytest t
 - Extracts latency from `time=12.3 ms` format
 - Extracts latency from `time<1 ms` format
 - Returns `(False, None)` on timeout
+
+### VPN notification logic
+- Notifies once per incident (not every loop cycle)
+- Resets when VPN protection is restored
+- Notifies again after recovery and second drop
+- Distinguishes "tunnel up but IP unprotected" from "tunnel down"
+- Handles osascript not found / timeout gracefully
 
 ## 2. Integration Tests (macOS only)
 
@@ -77,6 +85,7 @@ These require a real macOS machine. Run manually or in macOS CI.
 - [ ] `is_vpn_connected()` returns False when Proton VPN is disconnected
 - [ ] Detection works via `scutil --nwi` path
 - [ ] Detection works via `ifconfig` fallback when scutil fails
+- [ ] Tunnel drop immediately invalidates cached IP verification
 
 ### VPN IP verification
 - [ ] `verify_vpn_ip()` returns `verified=True` with Proton VPN connected (org should contain "Proton")
@@ -86,12 +95,13 @@ These require a real macOS machine. Run manually or in macOS CI.
 - [ ] Verification runs every 60 seconds (check with debug logging)
 - [ ] Network timeout doesn't crash the app (disconnect ethernet during check)
 
-### VPN recycling
-- [ ] Proton VPN reconnects via osascript when tunnel is down and network is up
-- [ ] `--vpn-mode fastest` triggers "Fastest" menu item
-- [ ] `--vpn-mode random` triggers "Random" menu item
-- [ ] 30-second cooldown prevents rapid recycle attempts
-- [ ] Recycle does not trigger when `--no-vpn` is set
+### VPN drop alert
+- [ ] macOS notification fires when tunnel drops
+- [ ] macOS notification fires when tunnel is up but IP is unprotected (the "lying connected" state)
+- [ ] Notification includes Basso sound
+- [ ] Notification only fires once per incident (not every loop cycle)
+- [ ] Notification resets and fires again after VPN recovers and drops again
+- [ ] No notification when `--no-vpn` is set
 
 ### Transmission safety kill
 - [ ] Transmission.app is killed when VPN verified status is False
@@ -127,6 +137,7 @@ These require a real macOS machine. Run manually or in macOS CI.
 ### ANSI display (Shell version)
 - [ ] Same visual checks as above (minus uptime bars — shell only shows session %)
 - [ ] Colors render correctly in Terminal.app, iTerm2, and tmux
+- [ ] No flicker on refresh (cursor-home instead of clear)
 - [ ] Cursor is hidden during run and restored on exit
 - [ ] `q` key and Ctrl+C both exit cleanly with session summary
 
@@ -135,14 +146,14 @@ These require a real macOS machine. Run manually or in macOS CI.
 ### Network failures
 - [ ] Unplug ethernet → status changes to DISCONNECTED within one interval
 - [ ] Replug ethernet → status changes to CONNECTED
-- [ ] VPN recycle is triggered after ethernet reconnect if VPN tunnel is down
+- [ ] Notification fires if VPN was protecting before disconnect
 - [ ] Transmission is killed during the disconnected period if VPN drops
 
 ### VPN failures
 - [ ] Disconnect Proton VPN manually → TUNNEL shows Down, VPN IP shows NOT Protected (after next verify)
 - [ ] Transmission is killed after VPN verification confirms no VPN
-- [ ] VPN recycle attempt is made within 30 seconds
-- [ ] Reconnect Proton VPN manually → both TUNNEL and VPN IP recover
+- [ ] macOS notification fires alerting user to reconnect
+- [ ] Reconnect Proton VPN manually → both TUNNEL and VPN IP recover, notification resets
 
 ### API failures
 - [ ] `ipinfo.io` unreachable (e.g., DNS blocked) → VPN IP shows "Checking..." indefinitely, falls back to tunnel check for safety decisions
@@ -165,15 +176,17 @@ Verify the shell version matches Python behavior for shared features:
 - [ ] VPN tunnel detection (scutil + ifconfig fallback)
 - [ ] VPN IP verification (curl/wget + grep parsing matches Python's urllib+json)
 - [ ] Baseline IP learning
-- [ ] VPN recycle with cooldown
+- [ ] VPN drop notification (once per incident, resets on recovery)
 - [ ] Transmission kill with one-shot guard
 - [ ] All CLI flags accepted and functional
+- [ ] `--version` prints version
 - [ ] Clean exit on q and Ctrl+C
+- [ ] Flicker-free display (cursor-home, not clear)
 
 ## 6. Running Tests
 
 ```bash
-# Unit tests (once test files exist)
+# Unit tests
 python3 -m pytest tests/ -v
 
 # Syntax checks

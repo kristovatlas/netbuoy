@@ -15,6 +15,8 @@ import time
 import urllib.request
 from pathlib import Path
 
+__version__ = "0.1.0"
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -313,8 +315,9 @@ def verify_vpn_ip(baseline_ip=None):
         with urllib.request.urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode())
 
-        ip = data.get("ip", "")
-        org = data.get("org", "")
+        # Sanitize API response: strip control characters and truncate
+        ip = re.sub(r"[^\x20-\x7E]", "", str(data.get("ip", "")))[:45]
+        org = re.sub(r"[^\x20-\x7E]", "", str(data.get("org", "")))[:100]
         org_lower = org.lower()
 
         # Check if org matches a known VPN provider
@@ -788,6 +791,11 @@ def main():
     parser = argparse.ArgumentParser(
         description="netbuoy - Network connectivity monitor & healer for macOS",
         formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"netbuoy {__version__}",
     )
     parser.add_argument(
         "--keep-wifi",
